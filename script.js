@@ -1,10 +1,10 @@
 diff --git a/script.js b/script.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..30c9b1e229459538d250a673568efb7cce4240cf
+index 0000000000000000000000000000000000000000..83b8b0f70ffb19eb4e649c1420a6d75e09c034d1
 --- /dev/null
 +++ b/script.js
-@@ -0,0 +1,80 @@
-+const memories = [
+@@ -0,0 +1,127 @@
++const fallbackMemories = [
 +  {
 +    title: "First Leaf Pile Jump",
 +    date: "October 2008",
@@ -39,13 +39,56 @@ index 0000000000000000000000000000000000000000..30c9b1e229459538d250a673568efb7c
 +const date = document.querySelector("#memory-date");
 +const title = document.querySelector("#memory-title");
 +const caption = document.querySelector("#memory-caption");
-+const thumbnails = [...document.querySelectorAll(".thumbnail")];
++const thumbnailStrip = document.querySelector(".memory-strip");
 +const toggleButton = document.querySelector('[data-action="toggle"]');
++let memories = [];
++let thumbnails = [];
 +let currentIndex = 0;
 +let isPlaying = true;
++const rotationDelay = 5000;
 +let rotationTimer;
 +
-+function showMemory(index) {
++function normalizeMemory(memory, index) {
++  return {
++    title: memory.title || `Memory ${index + 1}`,
++    date: memory.date || "Childhood memory",
++    caption: memory.caption || "Add a caption for this childhood memory.",
++    image: memory.image,
++    alt: memory.alt || memory.title || `Childhood memory ${index + 1}`
++  };
++}
++
++async function loadMemories() {
++  try {
++    const response = await fetch("photos/manifest.json", { cache: "no-store" });
++    if (!response.ok) {
++      throw new Error("Photo manifest could not be loaded.");
++    }
++
++    const manifest = await response.json();
++    const manifestMemories = manifest.filter((memory) => memory.image).map(normalizeMemory);
++    memories = manifestMemories.length > 0 ? manifestMemories : fallbackMemories;
++  } catch (error) {
++    console.warn("Using fallback memories:", error);
++    memories = fallbackMemories;
++  }
++}
++
++function buildThumbnails() {
++  thumbnailStrip.innerHTML = "";
++  thumbnails = memories.map((memory, index) => {
++    const thumbnail = document.createElement("button");
++    thumbnail.className = "thumbnail";
++    thumbnail.type = "button";
++    thumbnail.style.backgroundImage = `url(${memory.image})`;
++    thumbnail.setAttribute("aria-label", `Show ${memory.title}`);
++    thumbnail.addEventListener("click", () => showMemory(index));
++    thumbnailStrip.append(thumbnail);
++    return thumbnail;
++  });
++}
++
++function showMemory(index, resetAutoRotation = true) {
 +  currentIndex = (index + memories.length) % memories.length;
 +  const memory = memories[currentIndex];
 +
@@ -56,31 +99,35 @@ index 0000000000000000000000000000000000000000..30c9b1e229459538d250a673568efb7c
 +  caption.textContent = memory.caption;
 +
 +  thumbnails.forEach((thumbnail, thumbnailIndex) => {
-+    thumbnail.style.backgroundImage = `url(${memories[thumbnailIndex].image})`;
-+    thumbnail.setAttribute("aria-label", `Show ${memories[thumbnailIndex].title}`);
 +    thumbnail.setAttribute("aria-current", String(thumbnailIndex === currentIndex));
 +  });
++
++  if (isPlaying && resetAutoRotation) {
++    scheduleNextRotation();
++  }
 +}
 +
-+function startRotation() {
-+  clearInterval(rotationTimer);
-+  rotationTimer = setInterval(() => showMemory(currentIndex + 1), 5000);
++function scheduleNextRotation() {
++  clearTimeout(rotationTimer);
++  rotationTimer = setTimeout(() => showMemory(currentIndex + 1), rotationDelay);
 +}
 +
 +function setPlaying(playing) {
 +  isPlaying = playing;
-+  toggleButton.textContent = isPlaying ? "Pause" : "Play";
++  toggleButton.textContent = isPlaying ? "Pause auto-rotation" : "Play auto-rotation";
++  toggleButton.setAttribute("aria-pressed", String(isPlaying));
 +  if (isPlaying) {
-+    startRotation();
++    scheduleNextRotation();
 +  } else {
-+    clearInterval(rotationTimer);
++    clearTimeout(rotationTimer);
 +  }
 +}
 +
 +document.querySelector('[data-action="previous"]').addEventListener("click", () => showMemory(currentIndex - 1));
 +document.querySelector('[data-action="next"]').addEventListener("click", () => showMemory(currentIndex + 1));
 +toggleButton.addEventListener("click", () => setPlaying(!isPlaying));
-+thumbnails.forEach((thumbnail, index) => thumbnail.addEventListener("click", () => showMemory(index)));
 +
-+showMemory(currentIndex);
-+startRotation();
++loadMemories().then(() => {
++  buildThumbnails();
++  showMemory(currentIndex);
++});
