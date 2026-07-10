@@ -1,9 +1,9 @@
 diff --git a/index.html b/index.html
 new file mode 100644
-index 0000000000000000000000000000000000000000..90dfdc8fac37cc0a417d1050516907890e526c8e
+index 0000000000000000000000000000000000000000..48082a2404416a3cac68e3e2e333c75f5358a4bd
 --- /dev/null
 +++ b/index.html
-@@ -0,0 +1,54 @@
+@@ -0,0 +1,50 @@
 +<!DOCTYPE html>
 +<html lang="en">
 +  <head>
@@ -30,9 +30,10 @@ index 0000000000000000000000000000000000000000..90dfdc8fac37cc0a417d105051690789
 +          </p>
 +          <div class="hero__actions" aria-label="Gallery controls">
 +            <button class="control" type="button" data-action="previous">Previous</button>
-+            <button class="control control--primary" type="button" data-action="toggle">Pause</button>
++            <button class="control control--primary" type="button" data-action="toggle" aria-pressed="true">Pause auto-rotation</button>
 +            <button class="control" type="button" data-action="next">Next</button>
 +          </div>
++          <p class="rotation-note">Photos rotate automatically every 5 seconds.</p>
 +        </div>
 +
 +        <article class="memory-card" aria-live="polite">
@@ -47,12 +48,7 @@ index 0000000000000000000000000000000000000000..90dfdc8fac37cc0a417d105051690789
 +        </article>
 +      </section>
 +
-+      <section class="memory-strip" aria-label="Memory thumbnails">
-+        <button class="thumbnail" type="button" data-slide="0"></button>
-+        <button class="thumbnail" type="button" data-slide="1"></button>
-+        <button class="thumbnail" type="button" data-slide="2"></button>
-+        <button class="thumbnail" type="button" data-slide="3"></button>
-+      </section>
++      <section class="memory-strip" aria-label="Memory thumbnails"></section>
 +    </main>
 +
 +    <script src="script.js"></script>
